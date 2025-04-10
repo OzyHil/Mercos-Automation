@@ -39,7 +39,7 @@ def get_driver():
         return get_driver()
 
 def close_browser_process():
-    # os.system('taskkill /f /im msedge.exe >nul 2>&1')
+    os.system('taskkill /f /im msedge.exe >nul 2>&1')
     os.system("taskkill /f /im msedgedriver.exe >nul 2>&1")
 
 def login(driver, url):
