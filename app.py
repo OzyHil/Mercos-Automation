@@ -45,7 +45,7 @@ def baixar_html():
     save_csv(dados_global, f'data/{file_path_global}', write_header)
 
     # Envia o arquivo como download
-    return send_file(f"{file_path_global}.csv", as_attachment=True)
+    return send_file(f"data/{file_path_global}.csv", as_attachment=True)
 
 if __name__ == "__main__":
     socketio.run(app, debug=True)
