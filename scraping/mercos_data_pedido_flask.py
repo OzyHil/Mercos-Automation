@@ -71,8 +71,8 @@ def open_order_details(driver):
      
 def extract_client_info(driver):
     return {
-        "Fantasia": html.unescape(WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="selecionado_autocomplete_id_codigo_cliente"]/span/div/div[1]/div[1]/h5/a'))).text),
-        "Razao Social": html.unescape(WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="selecionado_autocomplete_id_codigo_cliente"]/span/div/div[1]/div[1]/h5/small[1]'))).text.lstrip("- ")),
+        # "Fantasia": html.unescape(WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="selecionado_autocomplete_id_codigo_cliente"]/span/div/div[1]/div[1]/h5/a'))).text),
+        # "Razao Social": html.unescape(WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="selecionado_autocomplete_id_codigo_cliente"]/span/div/div[1]/div[1]/h5/small[1]'))).text.lstrip("- ")),
         "CNPJ": WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="selecionado_autocomplete_id_codigo_cliente"]/span/div/div[1]/div[1]/h5/small[2]'))).text.lstrip("-"),
         "Cidade": WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="selecionado_autocomplete_id_codigo_cliente"]/span/div/div[3]/div/span'))).text
     }
@@ -87,32 +87,27 @@ def expand_order_items(driver):
 def extract_order_items(driver):
     request_itens = driver.find_elements(By.CLASS_NAME, "dados_item")
     request = []
-    
+
     for request_item in request_itens:
         colums = request_item.find_elements(By.TAG_NAME, "td")
-        
+
+        item = {
+            "Codigo": colums[1].text.strip(),
+            "Descricao": colums[2].text.strip(),
+            "Quantidade": colums[3].text.strip().replace("FD", ""),
+            "Preco Tab.": colums[4].text.strip(),
+            "Preco Liquido": colums[7].text.strip(),
+        }
+
         if len(colums) > 10:
-            item = {
-                "Codigo": colums[1].text.strip(),
-                "Descricao": colums[2].text.strip(),
-                "Quantidade": colums[3].text.strip(),
-                "Preco Tab.": colums[4].text.strip(),
-                "Preco Liquido": colums[7].text.strip(),
-                "IPI": colums[8].text.strip(),
-                "Subtotal": colums[9].text.strip(),
-            }
+            item["IPI"] = colums[8].text.strip()
+            item["Subtotal"] = colums[9].text.strip()
         else:
-            item = {
-                "Codigo": colums[1].text.strip(),
-                "Descricao": colums[2].text.strip(),
-                "Quantidade": colums[3].text.strip(),
-                "Preco Tab.": colums[4].text.strip(),
-                "Preco Liquido": colums[7].text.strip(),
-                "IPI": '---',
-                "Subtotal": colums[8].text.strip(),
-            }
+            item["IPI"] = '---'
+            item["Subtotal"] = colums[8].text.strip()
+
         request.append(item)
-    
+
     return request
 
 def extract_order_summary(driver):
