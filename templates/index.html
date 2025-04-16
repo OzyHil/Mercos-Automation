@@ -8,7 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <style>
         .form-container {
-            max-width: 400px;
+            max-width: 500px;
             margin: 0 auto;
         }
 
@@ -35,7 +35,7 @@
                                 <option value="406269">Meu Love</option>
                             </select>
                         </div>
-                        
+
                         <h5 class="mb-3 text-center">Selecione o Período</h5>
                         <div class="mb-3">
                             <label class="form-label">Data de Início:</label>
@@ -47,7 +47,18 @@
                             <input id="dataFim" type="date" class="form-control" name="data_fim" required>
                         </div>
 
-                        <button type="submit" class="btn btn-primary w-100">Buscar</button>
+                        <button type="submit" name="tipo_extracao" value="geral"
+                            class="btn btn-outline-primary w-100 mb-1">
+                            Extração de Dados Gerais
+                        </button>
+                        <p><i>Campos: CNPJ, Tipo_Pedido, Cond_Pagmt, Data, Valor_Pedido</i></p>
+
+                        <button type="submit" name="tipo_extracao" value="produtos"
+                            class="btn btn-outline-primary w-100 mb-1">
+                            Extração de Produtos
+                        </button>
+
+                        <p><i>Campos: Cod_Produto, Quantidade, Preço_Liq, IPI, Codigo_Pedido, Tipo_Pedido, Cond_Pagmt, Vendedor</i></p>
 
                         <!-- Barra de progresso -->
                         <div id="progresso" class="d-none mt-4 d-flex align-items-center gap-2">
@@ -55,7 +66,7 @@
                                 <div id="barraProgresso" class="progress-bar"
                                     style="width: 0%; height: 20px; background: green;"></div>
                             </div>
-                            <p id="porcentagemTexto" class="mb-0">0%</p>
+                            <p id="porcentagemTexto" class="">0%</p>
                         </div>
 
 
@@ -83,8 +94,7 @@
                                 </tbody>
                             </table>
                         </div>
-
-
+                    </form>
                 </div>
             </div>
         </div>
@@ -138,6 +148,19 @@
 
         form.addEventListener("submit", function (e) {
             e.preventDefault();
+
+            // Captura o valor do botão clicado
+            let tipoExtracao = "";
+            const btnGeral = document.querySelector('button[name="tipo_extracao"][value="geral"]');
+            const btnProdutos = document.querySelector('button[name="tipo_extracao"][value="produtos"]');
+
+            // Verifica qual botão foi clicado
+            if (btnGeral && btnGeral === document.activeElement) {
+                tipoExtracao = "geral";
+            } else if (btnProdutos && btnProdutos === document.activeElement) {
+                tipoExtracao = "produtos";
+            }
+
             progresso.classList.remove("d-none");
             barra.style.width = "0%";
             tabela.classList.add("hidden");
@@ -146,13 +169,13 @@
             const dataInicio = document.getElementById("dataInicio").value;
             const dataFim = document.getElementById("dataFim").value;
             const empresa = document.getElementById("empresa").value;
-
+            
             fetch("/buscar", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded",
                 },
-                body: `data_inicio=${encodeURIComponent(dataInicio)}&data_fim=${encodeURIComponent(dataFim)}&empresa=${encodeURIComponent(empresa)}`
+                body: `data_inicio=${encodeURIComponent(dataInicio)}&data_fim=${encodeURIComponent(dataFim)}&empresa=${encodeURIComponent(empresa)}&tipo_extracao=${encodeURIComponent(tipoExtracao)}`
             })
                 .then(response => {
                     if (!response.ok) throw new Error("Erro ao buscar dados.");

@@ -73,8 +73,8 @@ def extract_client_info(driver):
     return {
         # "Fantasia": html.unescape(WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="selecionado_autocomplete_id_codigo_cliente"]/span/div/div[1]/div[1]/h5/a'))).text),
         # "Razao Social": html.unescape(WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="selecionado_autocomplete_id_codigo_cliente"]/span/div/div[1]/div[1]/h5/small[1]'))).text.lstrip("- ")),
-        "CNPJ": WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="selecionado_autocomplete_id_codigo_cliente"]/span/div/div[1]/div[1]/h5/small[2]'))).text.lstrip("-"),
-        "Cidade": WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="selecionado_autocomplete_id_codigo_cliente"]/span/div/div[3]/div/span'))).text
+        "CNPJ": WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="selecionado_autocomplete_id_codigo_cliente"]/span/div/div[1]/div[1]/h5/small[2]'))).text.lstrip("-").strip(),
+        # "Cidade": WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="selecionado_autocomplete_id_codigo_cliente"]/span/div/div[3]/div/span'))).text
     }
 
 def expand_order_items(driver):
@@ -93,38 +93,62 @@ def extract_order_items(driver):
 
         item = {
             "Codigo": colums[1].text.strip(),
-            "Descricao": colums[2].text.strip(),
-            "Quantidade": colums[3].text.strip().replace("FD", ""),
-            "Preco Tab.": colums[4].text.strip(),
+            # "Descricao": colums[2].text.strip(),
+            "Quantidade": colums[3].text.replace("FD", "").strip(),
+            # "Preco Tab.": colums[4].text.strip(),
             "Preco Liquido": colums[7].text.strip(),
         }
 
         if len(colums) > 10:
-            item["IPI"] = colums[8].text.strip()
-            item["Subtotal"] = colums[9].text.strip()
+            ipi = colums[8].text.strip()  # ex: "3,25%"
+            ipi = float(ipi.replace('%', '').replace(',', '.')) / 100
+            item["IPI"] = f"{ipi:.6f}"  # ou o número de casas decimais que preferir
+
+            # item["Subtotal"] = colums[9].text.strip()
         else:
-            item["IPI"] = '---'
-            item["Subtotal"] = colums[8].text.strip()
+            item["IPI"] = '0'
+            # item["Subtotal"] = colums[8].text.strip()
 
         request.append(item)
 
     return request
 
-def extract_order_summary(driver):
-    return {
-        "Valor Pedido": WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="rodape_itens_pedido_js"]/div[1]/div[6]/div/strong'))).text,
-        "Data Pedido": WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="informacoes_complementares"]/div/div/div[1]/div[2]/div/div[2]'))).text,
-        "Tipo Pedido": WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="informacoes_complementares"]/div/div/div[1]/div[3]/div/div[2]'))).text,
-        "Vendedor": WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="informacoes_complementares"]/div/div/div[1]/div[4]/div/div[2]'))).text,
-        "Condicao Pagamento": WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="informacoes_complementares"]/div/div/div[2]/div/div/div[2]'))).text
+def extract_order_summary(driver, tipo_extracao):
+    ordem = {
+        "Tipo Pedido": WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="informacoes_complementares"]/div/div/div[1]/div[3]/div/div[2]'))).text.strip(),
+        "Condicao Pagamento": WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="informacoes_complementares"]/div/div/div[2]/div/div/div[2]'))).text.strip()
     }
 
-def save_csv(dados, file_path, write_header):
+    if tipo_extracao == 'geral':
+        ordem["Data Pedido"] = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="informacoes_complementares"]/div/div/div[1]/div[2]/div/div[2]'))).text.strip()
+        ordem["Valor Pedido"] = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="rodape_itens_pedido_js"]/div[1]/div[6]/div/strong'))).text.strip()
+   
+    elif tipo_extracao == 'produtos':
+        ordem["Vendedor"] = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="informacoes_complementares"]/div/div/div[1]/div[4]/div/div[2]'))).text.strip()
+    
+    return ordem
+        # {"Valor Pedido": WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="rodape_itens_pedido_js"]/div[1]/div[6]/div/strong'))).text,
+        # "Data Pedido": WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="informacoes_complementares"]/div/div/div[1]/div[2]/div/div[2]'))).text,
+        # "Tipo Pedido": WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="informacoes_complementares"]/div/div/div[1]/div[3]/div/div[2]'))).text,
+        # "Vendedor": WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="informacoes_complementares"]/div/div/div[1]/div[4]/div/div[2]'))).text,
+        # "Condicao Pagamento": WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="informacoes_complementares"]/div/div/div[2]/div/div/div[2]'))).text}
+    
+
+def save_csv(dados, file_path, write_header, tipo_extracao):
     if not dados:
         return
 
-    df = pd.json_normalize(dados, record_path="Pedido", meta=[col for col in dados[0] if col != "Pedido"])
-    df.to_csv((file_path + ".csv"), mode='a', index=False, header=write_header)
+    if tipo_extracao == 'produtos':
+        df = pd.json_normalize(
+            dados, 
+            record_path="Pedido", 
+            meta=[col for col in dados[0] if col != "Pedido"]
+        )
+    else:
+        df = pd.DataFrame(dados)
+
+    df.to_csv(file_path + ".csv", mode='a', index=False, header=write_header)
+
 
 def format_url_by_date(enterprise, initial_date: str, final_date: str) -> str:
     base_url = 'https://app.mercos.com/{}/pedidos/?tipo_pesquisa=1&texto=&tipo_de_pedido=&cliente=&nota_fiscal=&data_emissao_inicio={}&data_emissao_fim={}&status=2&criador=&equipe=&plataforma=&enviado_representada=&status_custom='
@@ -165,7 +189,7 @@ def extract_order_codes(driver, url):
         print("Não foram encontrados pedidos dentro do intervalo das datas")
         return []
         
-def process_lote(driver, lote, url):
+def process_lote(driver, lote, url, tipo_extracao):
     lote_dados = []
     login(driver, url)
     
@@ -177,16 +201,22 @@ def process_lote(driver, lote, url):
             except:
                 print(f"Pedido {code} não foi concluído.")
                 continue
-
-            client_info = extract_client_info(driver)
-            expand_order_items(driver)
-            order_items = extract_order_items(driver)
-            order_summary = extract_order_summary(driver)
+            
+            client_info = {}
+            
+            if tipo_extracao == 'geral':
+                client_info = extract_client_info(driver)
+            
+            elif tipo_extracao == 'produtos':
+                expand_order_items(driver)
+                order_items = extract_order_items(driver)
+                client_info["Codigo do Pedido"] = code
+                client_info["Pedido"] = order_items
+            
+            order_summary = extract_order_summary(driver, tipo_extracao)
 
             client_info.update(order_summary)
-            client_info["Codigo do Pedido"] = code
-            client_info["Pedido"] = order_items
-
+            
             lote_dados.append(client_info)
 
         except TimeoutException:
@@ -197,7 +227,7 @@ def process_lote(driver, lote, url):
         driver.back()
     return lote_dados
 
-def main(enterprise, initial_date, final_date, progress_callback=None):
+def main(enterprise, initial_date, final_date, tipo_extracao, progress_callback=None):
     url_all_orders = f"https://app.mercos.com/{enterprise}/pedidos/"
     url_filtered  = format_url_by_date(enterprise, initial_date, final_date)
     
@@ -221,7 +251,7 @@ def main(enterprise, initial_date, final_date, progress_callback=None):
         lote = order_codes[i:i + lote_size]
 
         driver = get_driver()
-        lote_dados = process_lote(driver, lote, url_all_orders)
+        lote_dados = process_lote(driver, lote, url_all_orders, tipo_extracao)
         
         driver.delete_all_cookies()
         driver.quit()
@@ -266,3 +296,9 @@ def main(enterprise, initial_date, final_date, progress_callback=None):
 
 # WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "numero-pedido")))
 # driver.find_elements(By.CLASS_NAME, "numero-pedido")
+
+# Tipos de extração
+# gerar arquivo 1, - extração de dados gerais
+# data, tipo_pedido, cnpj, cond_pagmt
+# gerar arquivo 2, - extração de produtos
+# cod_produto, quantidade, preco_liq, ipi (null= 0), tipo, vendedor, cond_pagmt, codigo. 
