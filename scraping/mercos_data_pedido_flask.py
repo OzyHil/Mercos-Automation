@@ -100,8 +100,13 @@ def extract_order_items(driver):
         }
 
         if len(colums) > 10:
-            ipi = colums[8].text.strip()  # ex: "3,25%"
-            ipi = float(ipi.replace('%', '').replace(',', '.')) / 100
+            ipi = colums[8].text.strip()
+
+            if ipi == '---' or not ipi:
+                ipi = 0.0  # ou outro valor padrão
+            else:
+                ipi = float(ipi.replace('%', '').replace(',', '.')) / 100
+
             item["IPI"] = f"{ipi:.6f}"  # ou o número de casas decimais que preferir
 
             # item["Subtotal"] = colums[9].text.strip()

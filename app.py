@@ -51,15 +51,39 @@ def buscar():
 #     # Envia o arquivo como download
 #     return send_file(f"data/{file_path_global}.csv", as_attachment=True)
 def baixar_csv():
-    global dados_global, file_path_global
+    global dados_global, file_path_global, tipo_extracao
 
     if not dados_global:
         return "Nenhum dado para baixar", 400
 
+    linhas = []
+
+    if tipo_extracao == "produtos":
+        for item in dados_global:
+            if isinstance(item.get("Pedido"), list):
+                for produto in item["Pedido"]:
+                    linha = {**produto}
+                    for key in item:
+                        if key != "Pedido":
+                            linha[key] = item[key]
+                    linhas.append(linha)
+            else:
+                linhas.append(item)
+    else:
+        # Tipo geral ou outro — sem explosão
+        linhas = dados_global
+
     output = io.StringIO()
-    writer = csv.DictWriter(output, fieldnames=dados_global[0].keys())
+
+    # Garante que todos os campos sejam incluídos no cabeçalho
+    fieldnames = set()
+    for linha in linhas:
+        fieldnames.update(linha.keys())
+    fieldnames = list(fieldnames)
+
+    writer = csv.DictWriter(output, fieldnames=fieldnames)
     writer.writeheader()
-    writer.writerows(dados_global)
+    writer.writerows(linhas)
 
     output.seek(0)
 
