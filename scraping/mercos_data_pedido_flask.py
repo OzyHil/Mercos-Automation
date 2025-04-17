@@ -111,7 +111,7 @@ def extract_order_items(driver):
 
             # item["Subtotal"] = colums[9].text.strip()
         else:
-            item["IPI"] = '0'
+            item["IPI"] = f"{0.0:.6f}"
             # item["Subtotal"] = colums[8].text.strip()
 
         request.append(item)
